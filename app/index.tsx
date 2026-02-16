@@ -1,13 +1,6 @@
 import { Link } from "expo-router";
 import { useEffect, useState } from "react";
-import {
-  Image,
-  ScrollView,
-  Text,
-  View,
-  StyleSheet,
-  Pressable,
-} from "react-native";
+import { Image, ScrollView, Text, View, StyleSheet } from "react-native";
 
 interface Pokemon {
   name: string;
@@ -54,7 +47,7 @@ export default function Index() {
   async function fetchPokemons() {
     try {
       const response = await fetch(
-        "https://pokeapi.co/api/v2/pokemon?limit=20",
+        "https://pokeapi.co/api/v2/pokemon?limit=151",
       );
       const data = await response.json();
 
@@ -78,7 +71,13 @@ export default function Index() {
   }
 
   return (
-    <ScrollView contentContainerStyle={{ gap: 16, padding: 16, flex: 1 }}>
+    <ScrollView
+      contentContainerStyle={{
+        gap: 16,
+        padding: 16,
+        alignItems: "center",
+      }}
+    >
       {pokemons.map((pokemon) => (
         <Link
           key={pokemon.name}
@@ -88,22 +87,24 @@ export default function Index() {
             style={{
               // @ts-ignore
               backgroundColor: colorByType[pokemon.types[0].type.name] + 50,
+              width: 500,
+              height: 450,
               padding: 32,
               paddingBottom: 48,
               borderRadius: 20,
             }}
           >
             <Text style={styles.name}>{pokemon.name}</Text>
-            <Text style={styles.type}>{pokemon.types[0].type.name}</Text>
+            {pokemon.types.map((type) => (
+              <Text key={type.type.name} style={styles.type}>
+                {type.type.name}
+              </Text>
+            ))}
 
             <View style={{ flexDirection: "row", justifyContent: "center" }}>
               <Image
                 source={{ uri: pokemon.image }}
-                style={{ width: 150, height: 150 }}
-              />
-              <Image
-                source={{ uri: pokemon.imageBack }}
-                style={{ width: 150, height: 150 }}
+                style={{ width: 250, height: 250 }}
               />
             </View>
           </View>
@@ -115,16 +116,14 @@ export default function Index() {
 
 const styles = StyleSheet.create({
   name: {
-    fontSize: 28,
-    fontWeight: "bold",
-    marginLeft: 12,
+    fontSize: 36,
+    fontWeight: "900",
     textAlign: "center",
   },
   type: {
     fontSize: 20,
     fontWeight: "600",
     color: "#666",
-    marginLeft: 12,
     textAlign: "center",
   },
 });
