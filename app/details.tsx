@@ -1,26 +1,27 @@
 import { useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-import { Image, ScrollView, Text, View, StyleSheet } from "react-native";
-
-interface Pokemon {
-  name: string;
-  image: string;
-  imageBack: string;
-  types: string[];
-}
+import {
+  Image,
+  ScrollView,
+  Text,
+  View,
+  StyleSheet,
+  ActivityIndicator,
+} from "react-native";
+import { colorByType, Pokemon } from "./utils";
 
 export default function Details() {
   const [pokemon, setPokemon] = useState<Pokemon>();
+  const [loading, setLoading] = useState(true);
   const params = useLocalSearchParams();
 
-  console.log(JSON.stringify(pokemon, null, 2));
   useEffect(() => {
     async function fetchPokemon(name: string) {
       try {
         const response = await fetch(
           `https://pokeapi.co/api/v2/pokemon/${name}`,
-        );
-        const data = await response.json();
+        ).then((res) => res.json());
+        const data = response;
 
         setPokemon({
           name: data.name,
@@ -30,22 +31,48 @@ export default function Details() {
         });
       } catch (e) {
         console.error(e);
+      } finally {
+        setLoading(false);
       }
     }
 
     // @ts-ignore
     fetchPokemon(params.name);
+    console.log("fetchPokemon");
   }, [params.name]);
 
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
+
   return (
-    <ScrollView contentContainerStyle={{ gap: 16, padding: 16, flex: 1 }}>
-      <View style={{ gap: 16, padding: 16, flex: 1 }}>
-        <Text>{pokemon?.name}</Text>
+    <ScrollView
+      contentContainerStyle={{ gap: 16, padding: 16, alignItems: "center" }}
+    >
+      <View
+        style={{
+          // @ts-ignore
+          backgroundColor: colorByType[pokemon?.types[0].type.name] + 50,
+          width: 300,
+          // height: 450,
+          padding: 32,
+          // paddingBottom: 48,
+          borderRadius: 20,
+          alignItems: "center",
+        }}
+      >
+        <Text style={{ fontSize: 36, fontWeight: "bold" }}>
+          {pokemon?.name}
+        </Text>
         {pokemon && (
           <View style={{ flexDirection: "row", justifyContent: "center" }}>
             <Image
               source={{ uri: pokemon.image }}
-              style={{ width: 150, height: 150 }}
+              style={{ width: 250, height: 250 }}
             />
           </View>
         )}

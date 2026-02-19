@@ -1,45 +1,13 @@
-import { Link } from "expo-router";
 import { useEffect, useState } from "react";
-import { Image, ScrollView, Text, View, StyleSheet } from "react-native";
-
-interface Pokemon {
-  name: string;
-  image: string;
-  imageBack: string;
-  types: PokemonType[];
-}
-
-interface PokemonType {
-  type: {
-    name: string;
-  };
-}
-
-const colorByType = {
-  normal: "#A8A77A",
-  fire: "#EE8130",
-  water: "#6390F0",
-  electric: "#F7D02C",
-  grass: "#7AC74C",
-  ice: "#96D9D6",
-  fighting: "#C22E28",
-  poison: "#A33EA1",
-  ground: "#E2BF65",
-  flying: "#A98FF3",
-  psychic: "#F95587",
-  bug: "#A6B91A",
-  rock: "#B6A136",
-  ghost: "#735797",
-  dragon: "#6F35FC",
-  dark: "#705746",
-  steel: "#B7B7CE",
-  fairy: "#D685AD",
-};
+import { Text, FlatList, ActivityIndicator, View } from "react-native";
+import { Pokemon } from "./utils";
+import PokemonCard from "./components/ComponentPokemonCard";
 
 export default function Index() {
   const [pokemons, setPokemons] = useState<Pokemon[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  console.log(JSON.stringify(pokemons[0], null, 2));
   useEffect(() => {
     fetchPokemons();
   }, []);
@@ -52,7 +20,7 @@ export default function Index() {
       const data = await response.json();
 
       const detailedPokemon = await Promise.all(
-        data.results.map(async (pokemon: any) => {
+        data.results.map(async (pokemon: { name: string; url: string }) => {
           const res = await fetch(pokemon.url);
           const details = await res.json();
           return {
@@ -66,64 +34,34 @@ export default function Index() {
 
       setPokemons(detailedPokemon);
     } catch (e) {
-      console.error(e);
+      setError("Failed to load pokemons");
+    } finally {
+      setLoading(false);
     }
   }
 
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
+
+  if (error) {
+    return <Text>Error: {error}</Text>;
+  }
+
   return (
-    <ScrollView
+    <FlatList
+      data={pokemons}
+      keyExtractor={(item) => item.name}
+      renderItem={({ item }) => <PokemonCard pokemon={item} />}
       contentContainerStyle={{
         gap: 16,
         padding: 16,
         alignItems: "center",
       }}
-    >
-      {pokemons.map((pokemon) => (
-        <Link
-          key={pokemon.name}
-          href={{ pathname: "/details", params: { name: pokemon.name } }}
-        >
-          <View
-            style={{
-              // @ts-ignore
-              backgroundColor: colorByType[pokemon.types[0].type.name] + 50,
-              width: 500,
-              height: 450,
-              padding: 32,
-              paddingBottom: 48,
-              borderRadius: 20,
-            }}
-          >
-            <Text style={styles.name}>{pokemon.name}</Text>
-            {pokemon.types.map((type) => (
-              <Text key={type.type.name} style={styles.type}>
-                {type.type.name}
-              </Text>
-            ))}
-
-            <View style={{ flexDirection: "row", justifyContent: "center" }}>
-              <Image
-                source={{ uri: pokemon.image }}
-                style={{ width: 250, height: 250 }}
-              />
-            </View>
-          </View>
-        </Link>
-      ))}
-    </ScrollView>
+    ></FlatList>
   );
 }
-
-const styles = StyleSheet.create({
-  name: {
-    fontSize: 36,
-    fontWeight: "900",
-    textAlign: "center",
-  },
-  type: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: "#666",
-    textAlign: "center",
-  },
-});
